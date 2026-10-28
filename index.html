@@ -67,6 +67,7 @@
       <a class="ic" href="https://x.com/Someguynamedmo" target="_blank" rel="noopener" aria-label="X"><svg aria-hidden="true"><use href="#i-x"/></svg></a>
       <a class="pill" href="mailto:mo@makesecurity.fun">Email</a>
       <a class="pill" href="https://blog.makesecurity.fun/" target="_blank" rel="noopener">Blog</a>
+      <a class="pill dl" href="#cv" id="cv-open" aria-haspopup="dialog" aria-controls="cv" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Resume</a>
     </div>
   </div>
   <div class="spot" id="spot">
@@ -397,6 +398,19 @@
   </ul>
 </dialog>
 
+<dialog class="sheet" id="cv" aria-labelledby="cv-lab">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="top"><b class="lab" id="cv-lab">What are you hiring for?</b><button type="button" class="x" id="cv-x" aria-label="Close"><svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13"/></svg></button></div>
+  <ul>
+    <li><a class="jmp" href="cv/mo-sadek-leadership.pdf" download data-name="the security leadership resume">Security leadership <small>Head of</small></a></li>
+    <li><a class="jmp" href="cv/mo-sadek-appsec-ai.pdf" download data-name="the AppSec and AI security resume">AppSec + AI security <small>Product security</small></a></li>
+    <li><a class="jmp" href="cv/mo-sadek-research.pdf" download data-name="the research and community resume">AI security research <small>Research</small></a></li>
+    <li><a class="jmp" href="cv/mo-sadek-overview.pdf" download data-name="the career overview">Just curious <small>Everything</small></a></li>
+  </ul>
+  <p class="foot">Need my number? <a href="mailto:mo@makesecurity.fun">Email me</a>.</p>
+  <p class="vh" id="cv-live" aria-live="polite"></p>
+</dialog>
+
 <div class="vh" aria-live="polite" id="live"></div>
 
 <script>
@@ -585,7 +599,7 @@
         if (c.getBoundingClientRect().top <= rline) role = c.id;
       });
     }
-    $$('.jmp').forEach(b => {
+    $$('#jump .jmp').forEach(b => {
       if (b.dataset.to === cur && !(cur === 'experience' && role)) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
     });
     roleEls.forEach(b => {
@@ -667,51 +681,68 @@
   addEventListener('resize', railZone);
   railZone();
 
-  // Jump control. The sheet grows out of the button as a circle, rows rise in behind it, and it folds back into the button on close.
-  const fab = $('#fab'), sheet = $('#jump');
+  // Sheets (Jump to, Resume). Each grows out of the button that opened it as a circle, rows rise in behind it, and it folds
+  // back into that button on close.
   const OPEN_EASE = 'cubic-bezier(.2,.9,.1,1)', CLOSE_EASE = 'cubic-bezier(.5,0,.75,0)';
-  let closing = null, backdrop = null;
-  const iris = () => {
-    const s = sheet.getBoundingClientRect(), f = fab.getBoundingClientRect();
-    const x = f.left + f.width / 2 - s.left, y = f.top + f.height / 2 - s.top;
-    const r = Math.hypot(Math.max(x, s.width - x), Math.max(y, s.height - y));
-    return [`circle(${f.height / 2}px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`];
-  };
-  const fadeBackdrop = (opacity, opts) => {
-    backdrop?.cancel();
-    try { backdrop = sheet.animate({ opacity }, { ...opts, pseudoElement: '::backdrop' }); } catch (e) { /* no ::backdrop animation here: it just appears */ }
-  };
-  function openSheet() {
-    markCurrent();
-    sheet.showModal();
-    fab.setAttribute('aria-expanded', 'true');
-    if (reduced()) return;
-    const [small, full] = iris();
-    sheet.animate({ clipPath: [small, full] }, { duration: 520, easing: OPEN_EASE });
-    fadeBackdrop([0, 1], { duration: 300, easing: 'ease-out' });
-    $$('.top, li', sheet).forEach((el, i) => el.animate(
-      { opacity: [0, 1], transform: ['translateY(12px)', 'none'] },
-      { duration: 340, delay: 110 + Math.min(i, 14) * 24, easing: OPEN_EASE, fill: 'backwards' }));
+  function makeSheet(sheet, x, onOpen) {
+    let btn = null, closing = null, backdrop = null;
+    const iris = () => {
+      const s = sheet.getBoundingClientRect(), f = btn.getBoundingClientRect();
+      const x = f.left + f.width / 2 - s.left, y = f.top + f.height / 2 - s.top;
+      const r = Math.hypot(Math.max(x, s.width - x), Math.max(y, s.height - y));
+      return [`circle(${f.height / 2}px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`];
+    };
+    const fadeBackdrop = (opacity, opts) => {
+      backdrop?.cancel();
+      try { backdrop = sheet.animate({ opacity }, { ...opts, pseudoElement: '::backdrop' }); } catch (e) { /* no ::backdrop animation here: it just appears */ }
+    };
+    function open(from) {
+      btn = from;
+      onOpen?.();
+      sheet.showModal();
+      btn.setAttribute('aria-expanded', 'true');
+      if (reduced()) return;
+      const [small, full] = iris();
+      sheet.animate({ clipPath: [small, full] }, { duration: 520, easing: OPEN_EASE });
+      fadeBackdrop([0, 1], { duration: 300, easing: 'ease-out' });
+      $$('.top, li, .foot', sheet).forEach((el, i) => el.animate(
+        { opacity: [0, 1], transform: ['translateY(12px)', 'none'] },
+        { duration: 340, delay: 110 + Math.min(i, 14) * 24, easing: OPEN_EASE, fill: 'backwards' }));
+    }
+    function close() {
+      if (!sheet.open || closing) return;
+      if (reduced()) { sheet.close(); return; }
+      const [small, full] = iris();
+      closing = sheet.animate({ clipPath: [full, small] }, { duration: 300, easing: CLOSE_EASE, fill: 'forwards' });
+      fadeBackdrop([1, 0], { duration: 300, easing: 'ease-in', fill: 'forwards' });
+      closing.onfinish = () => sheet.close();
+    }
+    sheet.addEventListener('cancel', e => { e.preventDefault(); close(); });
+    sheet.addEventListener('close', () => {
+      btn?.setAttribute('aria-expanded', 'false');
+      sheet.getAnimations({ subtree: true }).forEach(a => a.cancel());
+      backdrop?.cancel();
+      closing = null;
+    });
+    x.addEventListener('click', close);
+    sheet.addEventListener('click', e => { if (e.target === sheet) close(); });
+    return { open, close };
   }
-  function closeSheet() {
-    if (!sheet.open || closing) return;
-    if (reduced()) { sheet.close(); return; }
-    const [small, full] = iris();
-    closing = sheet.animate({ clipPath: [full, small] }, { duration: 300, easing: CLOSE_EASE, fill: 'forwards' });
-    fadeBackdrop([1, 0], { duration: 300, easing: 'ease-in', fill: 'forwards' });
-    closing.onfinish = () => sheet.close();
-  }
-  fab.addEventListener('click', openSheet);
-  sheet.addEventListener('cancel', e => { e.preventDefault(); closeSheet(); });
-  sheet.addEventListener('close', () => {
-    fab.setAttribute('aria-expanded', 'false');
-    sheet.getAnimations({ subtree: true }).forEach(a => a.cancel());
-    backdrop?.cancel();
-    closing = null;
-  });
-  $('#jump-x').addEventListener('click', closeSheet);
-  sheet.addEventListener('click', e => { if (e.target === sheet) closeSheet(); });
-  $$('.jmp').forEach(b => b.addEventListener('click', () => {
+
+  const fab = $('#fab'), sheet = $('#jump');
+  const jump = makeSheet(sheet, $('#jump-x'), markCurrent);
+  fab.addEventListener('click', () => jump.open(fab));
+
+  // Resume: pick what you're hiring for, get that cut as a PDF. The row confirms for a beat, then the sheet folds away.
+  const cvBtn = $('#cv-open'), cv = makeSheet($('#cv'), $('#cv-x'), () => $$('#cv .jmp').forEach(o => delete o.dataset.got));
+  cvBtn.addEventListener('click', e => { e.preventDefault(); cv.open(cvBtn); });
+  $$('#cv .jmp').forEach(a => a.addEventListener('click', () => {
+    a.dataset.got = '';
+    $('#cv-live').textContent = 'Downloading ' + a.dataset.name + '.';
+    setTimeout(cv.close, 900);
+  }));
+
+  $$('#jump .jmp').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.to;
     if (sheet.open) sheet.close();
     if (id === 'top') { window.scrollTo({ top: 0, behavior: motion() }); return; }
