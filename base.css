@@ -50,3 +50,15 @@ html[data-filters=off][data-rail=strip] .rail{transform:translateY(-110%);pointe
   .speaking .eps.car{grid-auto-columns:340px}
 }
 @media print{ .eps .tile{display:none} }
+
+/* Resume sheet: rows are download links laid out like the Jump rows, so every skin's .jmp styling carries over. The row you
+   picked flips to a check while the file starts; the skin's accent comes through currentColor on hover/current. */
+.links .dl{gap:.4em}
+.links .dl svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#cv a.jmp{text-decoration:none;color:inherit}
+#cv a.jmp small::after{content:" ↓"}
+#cv a.jmp[data-got] small::after{content:" ✓"}
+#cv a.jmp[data-got]{box-shadow:inset 3px 0 0 currentColor}
+#cv .foot{margin:.9rem .5rem 0;font-size:.85rem;opacity:.75}
+@media print{ #cv-open{display:none} }
+#cv a.jmp small{white-space:nowrap}
