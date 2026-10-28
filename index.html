@@ -599,7 +599,7 @@
         if (c.getBoundingClientRect().top <= rline) role = c.id;
       });
     }
-    $$('#jump .jmp').forEach(b => {
+    $$('.jmp[data-to]').forEach(b => {
       if (b.dataset.to === cur && !(cur === 'experience' && role)) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
     });
     roleEls.forEach(b => {
@@ -742,7 +742,7 @@
     setTimeout(cv.close, 900);
   }));
 
-  $$('#jump .jmp').forEach(b => b.addEventListener('click', () => {
+  $$('.jmp[data-to]').forEach(b => b.addEventListener('click', () => {
     const id = b.dataset.to;
     if (sheet.open) sheet.close();
     if (id === 'top') { window.scrollTo({ top: 0, behavior: motion() }); return; }
